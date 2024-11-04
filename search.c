@@ -19,20 +19,21 @@ int searched_number = -1;
 int found = 0;
 
 pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t c = PTHREAD_COND_INITIALIZER;
 
 void *search(void *arg) {
     int column = (int)(arg);
     for (int i = 0; i < 9; i++) {
+        pthread_mutex_lock(&m);
         if (found) {
+            pthread_mutex_unlock(&m);
             return NULL;
         }
         if (sudoku[i][column] == searched_number) {
-            pthread_mutex_lock(&m);
             found = 1;
             pthread_mutex_unlock(&m);
             return NULL;
         }
+        pthread_mutex_unlock(&m);
     }
     return NULL;
 }
@@ -42,6 +43,9 @@ int main() {
 
     for (int i = 0; i < 9; i++) {
         pthread_create(&threads[i], NULL, search, i);
+    }
+
+    for (int i = 0; i < 9; i++) {
         pthread_join(threads[i], NULL);
     }
 
@@ -52,7 +56,6 @@ int main() {
     }
 
     pthread_mutex_destroy(&m);
-    pthread_cond_destroy(&c);
-    
+
     return 0;
 }
